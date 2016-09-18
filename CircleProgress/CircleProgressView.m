@@ -17,7 +17,7 @@
 @property(nonatomic)CGFloat pauseR;//暂停时添加的小圆半径
 @property(nonatomic) CGFloat MaxR;//进度完成后最大的扩散半径（斜对角线的一半）
 //扩散动画的定时器
-@property(nonatomic,strong) NSTimer *timer;
+@property(nonatomic,strong) CADisplayLink *timer;
 @end
 
 @implementation CircleProgressView
@@ -85,7 +85,20 @@
     if (_R1 > _MaxR) {
         return;
     }
-     _timer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(animate:) userInfo:nil repeats:YES];
+//     _timer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(animate:) userInfo:nil repeats:YES];
+    _timer = [CADisplayLink displayLinkWithTarget:self selector:@selector(animate:)];
+    [_timer addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
+    [_timer addToRunLoop:[NSRunLoop mainRunLoop] forMode:UITrackingRunLoopMode];
+    /* PS
+     NSDefaultRunLoopMode - 标准优先级
+     NSRunLoopCommonModes - 高优先级
+     UITrackingRunLoopMode - 用于UIScrollView和别的控件的动画
+     
+     在我们的例子中，我们是用了NSDefaultRunLoopMode，但是不能保证动画平滑的运行，所以就可以用NSRunLoopCommonModes来替代。但是要小心，因为如果动画在一个高帧率情况下运行，你会发现一些别的类似于定时器的任务或者类似于滑动的其他iOS动画会暂停，直到动画结束。
+     
+     同样可以同时对CADisplayLink指定多个run loop模式，于是我们可以同时加入NSDefaultRunLoopMode和UITrackingRunLoopMode来保证它不会被滑动打断，也不会被其他UIKit控件动画影响性能
+     */
+    
 }
 -(void)animate:(NSTimer *)sender
 {
